@@ -1,0 +1,30 @@
+{
+  "id": "recent-files",
+  "name": "Recent Files",
+  "version": "1.0.0",
+  "description": "Displays a list of recently opened files with sorting options.",
+  "main": "index.tsx",
+  "permissions": [],
+  "executionEnvironment": "worker",
+  "activationEvents": [ "onStartup" ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "recent-files-container",
+          "title": "Recent Files",
+          "icon": "clock"
+        }
+      ]
+    },
+    "views": {
+      "recent-files-container": [
+        {
+          "id": "recent-files-view",
+          "name": "Recent Files",
+          "type": "webview"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Files</title>
+    <style>
+        :root {
+            --bg: #1e1e2e;
+            --surface: #313244;
+            --text: #cdd6f4;
+            --accent: #89b4fa;
+            --hover: #45475a;
+            --remove: #f38ba8;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: sans-serif;
+            margin: 0; padding: 0;
+            font-size: 13px;
+        }
+        .header {
+            padding: 10px;
+            background: var(--surface);
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid var(--hover);
+        }
+        select {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--hover);
+            padding: 4px;
+            border-radius: 4px;
+            width: 100%;
+            outline: none;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid transparent;
+            user-select: none;
+        }
+        .file-item:hover {
+            background: var(--hover);
+        }
+        /* Drag & Drop Styles */
+        .file-item.draggable {
+            cursor: grab;
+        }
+        .file-item.dragging {
+            opacity: 0.5;
+            background: var(--surface);
+        }
+        .file-item.drag-over {
+            border-top: 2px solid var(--accent);
+        }
+        
+        .file-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            pointer-events: none; /* Let clicks pass to li */
+        }
+        .remove-btn {
+            opacity: 0;
+            color: var(--remove);
+            cursor: pointer;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .remove-btn:hover {
+            background: rgba(243, 139, 168, 0.1);
+        }
+        .file-item:hover .remove-btn {
+            opacity: 1;
+        }
+        .empty-msg {
+            padding: 20px;
+            text-align: center;
+            color: #6c7086;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <select id="sort-select">
+            <option value="mru">Recently Opened</option>
+            <option value="alpha">Alphabetical (A-Z)</option>
+            <option value="none">Not Ordered (Manual)</option>
+        </select>
+    </div>
+    <ul id="list" class="file-list"></ul>
+
+    <script>
+        const list = document.getElementById('list');
+        const sortSelect = document.getElementById('sort-select');
+        let currentSortMode = 'mru';
+        let draggedItem = null;
+
+        // --- Render ---
+        function render(data) {
+            currentSortMode = data.sortMode;
+            sortSelect.value = data.sortMode;
+            
+            list.innerHTML = '';
+            
+            if (!data.files || data.files.length === 0) {
+                list.innerHTML = '<div class="empty-msg">No recent files</div>';
+                return;
+            }
+
+            data.files.forEach((path, index) => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                
+                // Extract filename
+                const name = path.split('/').pop() || path;
+                
+                li.innerHTML = `
+                    <span class="file-name" title="${path}">${name}</span>
+                    <span class="remove-btn" title="Remove from list">✕</span>
+                `;
+
+                // 1. Open File (Entire Row)
+                li.addEventListener('click', () => {
+                    post('recent-files.open', path);
+                });
+
+                // 2. Remove File
+                li.querySelector('.remove-btn').addEventListener('click', (e) => {
+                    e.stopPropagation(); // Stop row click
+                    post('recent-files.remove', path);
+                });
+
+                // 3. Drag & Drop Setup (Only for Manual Sort)
+                if (currentSortMode === 'none') {
+                    li.setAttribute('draggable', 'true');
+                    li.classList.add('draggable');
+                    setupDragEvents(li);
+                }
+
+                list.appendChild(li);
+            });
+        }
+
+        function setupDragEvents(li) {
+            li.addEventListener('dragstart', (e) => {
+                draggedItem = li;
+                e.dataTransfer.effectAllowed = 'move';
+                // Slight delay to allow ghost image to be created before hiding element
+                setTimeout(() => li.classList.add('dragging'), 0);
+            });
+
+            li.addEventListener('dragend', () => {
+                li.classList.remove('dragging');
+                draggedItem = null;
+                // Cleanup drag-over classes
+                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            });
+
+            li.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Necessary to allow dropping
+                if (draggedItem === li) return;
+                
+                // Visual indicator
+                li.classList.add('drag-over');
+            });
+
+            li.addEventListener('dragleave', () => {
+                li.classList.remove('drag-over');
+            });
+
+            li.addEventListener('drop', (e) => {
+                e.preventDefault();
+                li.classList.remove('drag-over');
+                
+                if (draggedItem && draggedItem !== li) {
+                    // 1. Reorder DOM
+                    const allItems = [...list.children];
+                    const fromIndex = allItems.indexOf(draggedItem);
+                    const toIndex = allItems.indexOf(li);
+                    
+                    if (fromIndex < toIndex) {
+                        li.after(draggedItem);
+                    } else {
+                        li.before(draggedItem);
+                    }
+                    
+                    // 2. Persist new order
+                    const newOrder = [...list.children].map(item => 
+                        item.querySelector('.file-name').getAttribute('title')
+                    );
+                    post('recent-files.updateOrder', newOrder);
+                }
+            });
+        }
+
+        // --- Communication ---
+        function post(commandId, args) {
+            window.parent.postMessage({
+                command: 'executeCommand',
+                id: commandId,
+                args: args
+            }, '*');
+        }
+
+        window.addEventListener('message', (event) => {
+            const msg = event.data;
+            if (msg.type === 'event' && msg.channel === 'recent-files:update') {
+                render(msg.data);
+            }
+        });
+
+        // --- Events ---
+        sortSelect.addEventListener('change', (e) => {
+            post('recent-files.setSort', e.target.value);
+        });
+
+        // Initial fetch
+        setTimeout(() => post('recent-files.refresh'), 500);
+    </script>
+</body>
+</html>

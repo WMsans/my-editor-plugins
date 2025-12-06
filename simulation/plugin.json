@@ -1,0 +1,30 @@
+{
+  "id": "simulation",
+  "name": "Simulation Container",
+  "version": "0.2.0",
+  "description": "A Turing-complete JavaScript sandbox for the editor (Worker Mode).",
+  "author": "User",
+  "main": "index.tsx",
+  "permissions": [],
+  "isUniversal": true,
+  "executionEnvironment": "worker",
+  "activationEvents": [
+    "onStartup" 
+  ],
+  "contributes": {
+    "slashMenu": [
+      {
+        "command": "simulation.insert",
+        "title": "Simulation Node",
+        "description": "Insert a JS Canvas Sandbox"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "simulation.run",
+        "key": "Ctrl+Enter",
+        "when": "editorTextFocus && inSimulationBlock"
+      }
+    ]
+  }
+}
