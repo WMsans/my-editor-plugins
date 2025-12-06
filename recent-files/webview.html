@@ -158,6 +158,8 @@
             li.addEventListener('dragstart', (e) => {
                 draggedItem = li;
                 e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', li.querySelector('.file-name').getAttribute('title'));
+                
                 // Slight delay to allow ghost image to be created before hiding element
                 setTimeout(() => li.classList.add('dragging'), 0);
             });
