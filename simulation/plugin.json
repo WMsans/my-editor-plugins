@@ -5,7 +5,7 @@
   "description": "A Turing-complete JavaScript sandbox for the editor (Worker Mode).",
   "author": "User",
   "main": "index.tsx",
-  "permissions": [],
+  "permissions": ["filesystem"],
   "isUniversal": true,
   "executionEnvironment": "worker",
   "activationEvents": [

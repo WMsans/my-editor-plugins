@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Displays a list of recently opened files with sorting options.",
   "main": "index.tsx",
-  "permissions": [],
+  "permissions": ["filesystem"],
   "executionEnvironment": "worker",
   "activationEvents": [ "onStartup" ],
   "contributes": {

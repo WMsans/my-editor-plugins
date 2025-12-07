@@ -5,7 +5,7 @@
   "description": "Manage installed plugins.",
   "author": "System",
   "main": "index.tsx",
-  "permissions": [],
+  "permissions": ["filesystem"],
   "executionEnvironment": "worker",
   "activationEvents": [
     "onStartup"

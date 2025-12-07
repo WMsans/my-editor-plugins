@@ -5,7 +5,7 @@
   "description": "Play Slope directly in the editor.",
   "author": "User",
   "main": "index.tsx",
-  "permissions": [],
+  "permissions": ["filesystem"],
   "isUniversal": true,
   "executionEnvironment": "worker",
   "activationEvents": [
