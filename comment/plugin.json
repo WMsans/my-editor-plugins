@@ -13,15 +13,6 @@
         "category": "Comments"
       }
     ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "comments",
-          "title": "Comments",
-          "icon": "💬"
-        }
-      ]
-    },
     "views": {
       "comments": [
         {

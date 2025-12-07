@@ -49,7 +49,8 @@ const SidebarUpdateExtension = Extension.create({
     name: 'sidebarUpdateExtension',
     onSelectionUpdate() {
         // When selection changes, emit an event so the sidebar can re-check the cursor position
-        hostApi.events.emit('comment.selection-changed', this.editor.state);
+        // FIX: Pass empty object instead of state to prevent DataCloneError in WorkerClient
+        hostApi.events.emit('comment.selection-changed', {});
     },
 });
 

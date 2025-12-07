@@ -48,7 +48,9 @@ const CommentThreadComponent: React.FC<{
     thread: CommentThread, 
     commentDataService: CommentDataService,
     onEditorAction: () => void;
-}> = ({ thread, commentDataService, onEditorAction }) => {
+    onNavigate: (threadId: string) => void;
+    isHighlighted?: boolean;
+}> = ({ thread, commentDataService, onEditorAction, onNavigate, isHighlighted }) => {
     const [replyText, setReplyText] = useState('');
     const [showReply, setShowReply] = useState(false);
 
@@ -68,9 +70,6 @@ const CommentThreadComponent: React.FC<{
 
     const handleDelete = () => {
         if (window.confirm("Delete this comment thread and remove the highlight from the document?")) {
-            // Note: Deleting the mark is done manually or via a separate command which is complex.
-            // For simplicity here, we only delete the collaborative data.
-            // A full implementation would require a Tiptap transaction to remove all marks with this threadId.
             commentDataService.deleteThread(thread.id);
             onEditorAction();
         }
@@ -80,13 +79,27 @@ const CommentThreadComponent: React.FC<{
         <div style={{ 
             marginBottom: '15px', 
             padding: '10px', 
-            border: thread.resolved ? '1px dashed #555' : '1px solid #cdd6f4',
+            border: isHighlighted ? '1px solid var(--accent)' : (thread.resolved ? '1px dashed #555' : '1px solid #cdd6f4'),
             borderRadius: '5px',
-            background: thread.resolved ? '#1e1e2e' : '#242438'
+            background: thread.resolved ? '#1e1e2e' : '#242438',
+            transition: 'border 0.2s ease-in-out',
+            boxShadow: isHighlighted ? '0 0 5px rgba(137, 180, 250, 0.2)' : 'none'
         }}>
-            <h4 style={{ margin: '0 0 10px 0', color: thread.resolved ? '#888' : '#cdd6f4', fontSize: '1em' }}>
-                Thread ({thread.comments.length} replies)
-                {thread.resolved && <span style={{ marginLeft: '10px', color: 'lime' }}>[RESOLVED]</span>}
+            <h4 
+                onClick={() => onNavigate(thread.id)}
+                style={{ 
+                    margin: '0 0 10px 0', 
+                    color: thread.resolved ? '#888' : (isHighlighted ? 'var(--accent)' : '#cdd6f4'), 
+                    fontSize: '1em',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+                title="Click to jump to comment in document"
+            >
+                <span>Thread ({thread.comments.length} replies)</span>
+                {thread.resolved && <span style={{ marginLeft: '10px', color: 'lime', fontSize: '0.8em' }}>[RESOLVED]</span>}
             </h4>
             
             {thread.comments.map(comment => <CommentItem key={comment.id} comment={comment} />)}
@@ -164,7 +177,8 @@ export const CommentSidebar: React.FC<CommentSidebarProps> = ({
             setSelectedThreadIds(findThreadIdsInSelection(editorState));
         };
         
-        const disposable: Disposable = hostApi.events.on('comment-plugin.selection-changed', onSelectionChange);
+        // FIX: Match the event name emitted by index.tsx
+        const disposable: Disposable = hostApi.events.on('comment.selection-changed', onSelectionChange);
         return () => disposable.dispose();
     }, [hostApi, getEditorState]);
 
@@ -187,13 +201,43 @@ export const CommentSidebar: React.FC<CommentSidebarProps> = ({
     }, [allThreads, selectedThreadIds]);
 
 
-    const renderThreads = (threads: CommentThread[]) => (
+    const handleNavigate = (threadId: string) => {
+        const editor = hostApi.editor.getSafeInstance();
+        if (!editor) return;
+
+        let foundPos: number | null = null;
+        
+        // Scan the document for the mark associated with this thread
+        editor.state.doc.descendants((node, pos) => {
+            if (foundPos !== null) return false; // Stop if found
+            if (node.isInline && node.marks) {
+                const mark = node.marks.find(m => m.type.name === 'commentThread' && m.attrs.threadId === threadId);
+                if (mark) {
+                    foundPos = pos;
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        if (foundPos !== null) {
+            editor.chain()
+                .focus()
+                .setTextSelection(foundPos)
+                .scrollIntoView()
+                .run();
+        }
+    };
+
+    const renderThreads = (threads: CommentThread[], isHighlighted: boolean) => (
         threads.map(thread => (
             <CommentThreadComponent 
                 key={thread.id} 
                 thread={thread} 
                 commentDataService={commentDataService} 
                 onEditorAction={forceUpdate}
+                onNavigate={handleNavigate}
+                isHighlighted={isHighlighted}
             />
         ))
     );
@@ -212,10 +256,10 @@ export const CommentSidebar: React.FC<CommentSidebarProps> = ({
 
             {selectedThreads.length > 0 && (
                 <>
-                    <h3 style={{ borderBottom: '1px solid #444', paddingBottom: '5px', marginBottom: '15px', fontSize: '1.1em' }}>
+                    <h3 style={{ borderBottom: '1px solid #444', paddingBottom: '5px', marginBottom: '15px', fontSize: '1.1em', color: 'var(--accent)' }}>
                         Comments on Selected Text ({selectedThreads.length})
                     </h3>
-                    {renderThreads(selectedThreads)}
+                    {renderThreads(selectedThreads, true)}
                     <div style={{ borderTop: '1px dashed #444', margin: '20px 0' }} />
                 </>
             )}
@@ -225,7 +269,7 @@ export const CommentSidebar: React.FC<CommentSidebarProps> = ({
             </h3>
             
             {allUnresolvedThreads.length > 0 ? (
-                renderThreads(allUnresolvedThreads)
+                renderThreads(allUnresolvedThreads, false)
             ) : (
                 <p style={{ color: '#888', fontStyle: 'italic', fontSize: '0.9em' }}>
                     {selectedThreads.length === 0 ? "No active comment threads." : "No other unresolved comments."}
