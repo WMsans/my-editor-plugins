@@ -1,0 +1,11 @@
+{
+  "id": "catppuccin-latte",
+  "name": "Catppuccin Latte Theme",
+  "version": "0.1.0",
+  "description": "Soothing pastel theme for the high-spirited! (Light Mode)",
+  "author": "User",
+  "main": "index.tsx",
+  "permissions": [],
+  "executionEnvironment": "main",
+  "activationEvents": [ "onStartup" ]
+}

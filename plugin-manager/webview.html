@@ -6,6 +6,7 @@
     <title>Plugin Manager</title>
     <style>
         :root {
+            /* Default Fallbacks */
             --bg: #1e1e2e;
             --surface: #313244;
             --surface-hover: #45475a;
@@ -186,6 +187,26 @@
             margin-top: 40px;
         }
     </style>
+    <script>
+        function syncTheme() {
+            try {
+                const p = window.parent.document.documentElement;
+                const s = window.parent.getComputedStyle(p);
+                const r = document.documentElement.style;
+                
+                r.setProperty('--bg', s.getPropertyValue('--bg-primary'));
+                r.setProperty('--surface', s.getPropertyValue('--bg-tertiary'));
+                r.setProperty('--surface-hover', s.getPropertyValue('--border-hover'));
+                r.setProperty('--text', s.getPropertyValue('--text-primary'));
+                r.setProperty('--subtext', s.getPropertyValue('--text-secondary'));
+                r.setProperty('--accent', s.getPropertyValue('--accent'));
+                r.setProperty('--border', s.getPropertyValue('--border-color'));
+                r.setProperty('--green', s.getPropertyValue('--hl-string'));
+                r.setProperty('--red', s.getPropertyValue('--hl-number')); /* fallback to peach/orange if red not standard */
+            } catch(e) {}
+        }
+        syncTheme();
+    </script>
 </head>
 <body>
 
@@ -245,17 +266,14 @@
         document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', (e) => {
                 const id = e.target.getAttribute('data-id');
-                const enabled = e.target.checked; // This is the NEW state
-                togglePlugin(id, !enabled); // We pass current state to toggle
+                const enabled = e.target.checked; 
+                togglePlugin(id, !enabled); 
             });
         });
     }
 
     // --- Actions ---
     function togglePlugin(id, currentEnabled) {
-        // Send command to host
-        // We use window.parent.postMessage to reach the main process
-        // which forwards it to the commands system
         window.parent.postMessage({
             command: 'executeCommand',
             id: 'plugin-manager.toggle',
@@ -277,26 +295,18 @@
     });
 
     // --- Communication ---
-    
-    // 1. Listen for data from Host
     window.addEventListener('message', (event) => {
         const message = event.data;
-        
-        // Handle Event Bus messages (if forwarded by host)
         if (message.type === 'event' && message.channel === 'plugin-manager:data') {
             plugins = message.data;
             render(searchInput.value);
         }
-        
-        // Handle Direct messages (fallback)
         if (message.type === 'PLUGIN_LIST') {
             plugins = message.payload;
             render(searchInput.value);
         }
     });
 
-    // 2. Request initial data
-    // We try multiple channels to ensure we hit the host
     setTimeout(() => {
         window.parent.postMessage({ command: 'executeCommand', id: 'plugin-manager.refresh' }, '*');
     }, 500);

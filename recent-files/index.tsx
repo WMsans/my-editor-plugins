@@ -1,4 +1,4 @@
-import { HostAPI } from "../../src-frontend/mod-engine/types";
+import { HostAPI } from "../../src-frontend/engine/types";
 
 export function activate(api: HostAPI) {
     const VIEW_ID = "recent-files-view";

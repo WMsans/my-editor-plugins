@@ -1,4 +1,4 @@
-import { HostAPI } from "../../src-frontend/mod-engine/types";
+import { HostAPI } from "../../src-frontend/engine/types";
 
 export function activate(context: HostAPI) {
   const api = context;

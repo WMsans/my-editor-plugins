@@ -20,10 +20,30 @@
                 } 
             } 
         });
+
+        // --- Theme Sync ---
+        function syncTheme() {
+            try {
+                const p = window.parent.document.documentElement;
+                const s = window.parent.getComputedStyle(p);
+                // Sync background color
+                document.documentElement.style.setProperty('--bg-layer', s.getPropertyValue('--bg-secondary'));
+            } catch(e) {
+                console.warn("Theme sync failed");
+            }
+        }
+        // Run once and when requested
+        syncTheme();
+        window.addEventListener('message', (e) => {
+             if (e.data && e.data.channel === 'theme:changed') syncTheme();
+        });
     </script>
     
     <style>
-        body { margin: 0; overflow: hidden; background: #181825; }
+        :root {
+            --bg-layer: #181825; /* Fallback */
+        }
+        body { margin: 0; overflow: hidden; background: var(--bg-layer); }
         .webgl-content {
             width: 100%;
             height: 100vh; /* Full height of the block */

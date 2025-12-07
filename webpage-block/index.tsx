@@ -58,20 +58,20 @@ const WebpageComponent = (props: any) => {
 
   return (
     <NodeViewWrapper className="webpage-block" style={{
-        border: '1px solid #45475a',
+        border: '1px solid var(--border-color)',
         borderRadius: '6px',
-        background: '#181825',
+        background: 'var(--bg-secondary)',
         margin: '1rem 0',
         overflow: 'hidden'
     }}>
       {/* Control Bar */}
       <div className="block-header" contentEditable={false} style={{
-          background: '#313244',
+          background: 'var(--bg-tertiary)',
           padding: '5px 10px',
           display: 'flex',
           gap: '8px',
           alignItems: 'center',
-          color: '#a6adc8',
+          color: 'var(--text-secondary)',
           fontSize: '0.8rem'
       }}>
         <span>🌍</span>
@@ -86,9 +86,9 @@ const WebpageComponent = (props: any) => {
             placeholder="Enter URL (e.g. https://www.youtube.com/embed/...)"
             style={{
                 flex: 1,
-                background: '#11111b',
-                border: '1px solid #45475a',
-                color: '#cdd6f4',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
                 padding: '4px 8px',
                 borderRadius: '4px',
                 fontSize: '0.8rem'
@@ -106,9 +106,9 @@ const WebpageComponent = (props: any) => {
                 onBlur={commitHeight}
                 style={{
                     width: '60px',
-                    background: '#11111b',
-                    border: '1px solid #45475a',
-                    color: '#cdd6f4',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     padding: '4px 8px',
                     borderRadius: '4px',
                     fontSize: '0.8rem',
@@ -122,8 +122,8 @@ const WebpageComponent = (props: any) => {
             title="Open in System Browser"
             style={{
                 background: 'transparent',
-                border: '1px solid #585b70',
-                color: '#89b4fa',
+                border: '1px solid var(--border-hover)',
+                color: 'var(--accent)',
                 cursor: 'pointer',
                 borderRadius: '4px',
                 padding: '2px 8px',
@@ -137,7 +137,7 @@ const WebpageComponent = (props: any) => {
       {/* Webpage Content */}
       <div className="webpage-content" contentEditable={false} style={{
           height: height, // Use dynamic height
-          background: '#11111b',
+          background: 'var(--bg-tertiary)',
           position: 'relative',
           transition: 'height 0.2s ease'
       }}>
@@ -152,7 +152,7 @@ const WebpageComponent = (props: any) => {
         ) : (
             <div style={{ 
                 height: '100%', display: 'flex', flexDirection: 'column', 
-                alignItems: 'center', justifyContent: 'center', color: '#585b70',
+                alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)',
                 gap: '10px'
             }}>
                 <div>Enter a URL above to load content.</div>

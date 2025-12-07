@@ -1,4 +1,4 @@
-import type { HostAPI } from "../../src-frontend/mod-engine/types";
+import type { HostAPI } from "../../src-frontend/engine/types";
 
 export function activate(api: HostAPI) {
     let history: string[] = [];

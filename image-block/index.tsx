@@ -10,9 +10,6 @@ const ImageComponent = (props: any) => {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Access the HostAPI via the closure context or window (since we are in main thread)
-  // For robustness in this transpiled env, we'll assume context was passed to activate
-  // but here we are in a React Component. We can access the global exposed API.
   const api = (window as any).CollabAPI;
 
   // Sync with remote changes
@@ -30,27 +27,22 @@ const ImageComponent = (props: any) => {
         return;
     }
 
-    // [FIX] Retry mechanism for handling P2P file sync latency
     const loadImage = async (retries = 10) => {
         if(!api) return;
         setLoading(true);
         setError(null);
         try {
-            // Read bytes from the host filesystem (resolves relative path automatically now)
             const bytes: number[] = await api.data.fs.readFile(src);
             if (!active) return;
             
-            // Create Blob URL
             const u8 = new Uint8Array(bytes);
-            const blob = new Blob([u8]); // We let browser sniff mime or default
+            const blob = new Blob([u8]);
             const url = URL.createObjectURL(blob);
             setImageUrl(url);
             setLoading(false);
         } catch (e: any) {
             if (!active) return;
 
-            // Check if file is missing (os error 2) and we have retries left
-            // This happens when the doc update arrives before the file sync
             const isFileNotFound = e.toString().includes("os error 2") || 
                                    e.toString().includes("no such file") ||
                                    e.toString().includes("No such file");
@@ -71,7 +63,7 @@ const ImageComponent = (props: any) => {
         active = false;
         if (imageUrl) URL.revokeObjectURL(imageUrl);
     };
-  }, [src]); // Re-run when source path changes
+  }, [src]); 
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -88,32 +80,25 @@ const ImageComponent = (props: any) => {
 
     setLoading(true);
     try {
-        // 1. Read file from browser input
         const buffer = await file.arrayBuffer();
         const data = Array.from(new Uint8Array(buffer));
 
-        // 2. Ensure resources/textures exists
-        // We attempt to create it. If it exists or backend fails efficiently, we proceed.
         try {
             await api.data.fs.createDirectory("resources");
             await api.data.fs.createDirectory("resources/textures");
         } catch (err) {
-            // Ignore error if folder likely exists
             console.log("Folder creation result:", err);
         }
 
-        // 3. Write file
         const relPath = `resources/textures/${file.name}`;
         await api.data.fs.writeFile(relPath, data);
 
-        // 4. Update Node
         props.updateAttributes({ src: relPath });
-        setSrc(relPath); // Optimistic update
+        setSrc(relPath); 
     } catch (e: any) {
         setError("Upload failed: " + e.toString());
     } finally {
         setLoading(false);
-        // Reset input
         if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -121,8 +106,8 @@ const ImageComponent = (props: any) => {
   return (
     <NodeViewWrapper className="image-block" style={{ margin: '1rem 0' }}>
       <div className="image-content" contentEditable={false} style={{
-          background: '#181825',
-          border: '1px solid #45475a',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
           borderRadius: '6px',
           padding: '10px',
           display: 'flex',
@@ -131,7 +116,7 @@ const ImageComponent = (props: any) => {
           minHeight: '100px',
           position: 'relative'
       }}>
-        {loading && <div style={{ color: '#89b4fa', marginBottom: '10px' }}>Loading...</div>}
+        {loading && <div style={{ color: 'var(--accent)', marginBottom: '10px' }}>Loading...</div>}
         
         {imageUrl ? (
              <img 
@@ -140,20 +125,22 @@ const ImageComponent = (props: any) => {
                 style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: '4px' }}
              />
         ) : (
-            !loading && <div style={{ color: '#585b70', padding: '20px' }}>No image selected</div>
+            !loading && <div style={{ color: 'var(--text-muted)', padding: '20px' }}>No image selected</div>
         )}
 
         {error && <div style={{ color: '#f38ba8', fontSize: '0.8rem', marginTop: '10px' }}>{error}</div>}
 
         <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: '#a6adc8' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 {src || "Unsaved"}
             </span>
             <button 
                 onClick={handleUploadClick}
                 style={{
-                    background: '#313244', border: '1px solid #585b70',
-                    color: '#cdd6f4', padding: '4px 8px', borderRadius: '4px',
+                    background: 'var(--bg-tertiary)', 
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)', 
+                    padding: '4px 8px', borderRadius: '4px',
                     cursor: 'pointer', fontSize: '0.85rem'
                 }}
             >

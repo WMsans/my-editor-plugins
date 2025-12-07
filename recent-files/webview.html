@@ -6,6 +6,7 @@
     <title>Recent Files</title>
     <style>
         :root {
+            /* Default Fallback (Dark) */
             --bg: #1e1e2e;
             --surface: #313244;
             --text: #cdd6f4;
@@ -91,6 +92,26 @@
             color: #6c7086;
         }
     </style>
+    <script>
+        // --- Theme Sync ---
+        function syncTheme() {
+            try {
+                const p = window.parent.document.documentElement;
+                const s = window.parent.getComputedStyle(p);
+                const r = document.documentElement.style;
+                
+                // Map Host Variables to Plugin Variables
+                r.setProperty('--bg', s.getPropertyValue('--bg-primary')); 
+                r.setProperty('--surface', s.getPropertyValue('--bg-secondary')); 
+                r.setProperty('--text', s.getPropertyValue('--text-primary'));
+                r.setProperty('--accent', s.getPropertyValue('--accent'));
+                r.setProperty('--hover', s.getPropertyValue('--border-hover'));
+            } catch(e) {
+                console.log("Theme sync not available (standalone mode?)");
+            }
+        }
+        syncTheme();
+    </script>
 </head>
 <body>
     <div class="header">
