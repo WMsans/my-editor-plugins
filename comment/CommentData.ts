@@ -20,10 +20,14 @@ export interface CommentThread {
 export const COMMENT_MAP_KEY = "comment-threads";
 
 export class CommentDataService {
-    private commentThreadsMap: Y.Map<any>;
+    private getMap: () => Y.Map<any>;
 
-    constructor(yMap: Y.Map<any>) {
-        this.commentThreadsMap = yMap;
+    constructor(getMap: () => Y.Map<any>) {
+        this.getMap = getMap;
+    }
+
+    private get commentThreadsMap() {
+        return this.getMap();
     }
 
     private getCurrentUser(): { id: string, name: string } {

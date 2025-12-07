@@ -49,7 +49,6 @@ const SidebarUpdateExtension = Extension.create({
     name: 'sidebarUpdateExtension',
     onSelectionUpdate() {
         // When selection changes, emit an event so the sidebar can re-check the cursor position
-        // FIX: Pass empty object instead of state to prevent DataCloneError in WorkerClient
         hostApi.events.emit('comment.selection-changed', {});
     },
 });
@@ -87,9 +86,9 @@ const addCommentCommand = (api: HostAPI) => async (commentText: string | undefin
 export const activate: PluginExports['activate'] = async (api) => {
     hostApi = api;
     
-    // 1. Initialize data service with the collaborative map
-    const yMap = api.data.getMap(COMMENT_MAP_KEY);
-    commentDataService = new CommentDataService(yMap);
+    // 1. Initialize data service with a DYNAMIC getter for the collaborative map
+    // This ensures we always get the map for the CURRENTLY active document
+    commentDataService = new CommentDataService(() => api.data.getMap(COMMENT_MAP_KEY));
 
     // 2. Register Tiptap Extensions
     api.editor.registerExtension(CommentMark);

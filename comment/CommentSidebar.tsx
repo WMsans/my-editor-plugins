@@ -155,29 +155,46 @@ export const CommentSidebar: React.FC<CommentSidebarProps> = ({
     // Threads on the currently selected text
     const [selectedThreadIds, setSelectedThreadIds] = useState<string[]>([]);
     
+    // Track file version to force re-subscription when file changes
+    const [fileVersion, setFileVersion] = useState(0);
+
     const forceUpdate = useCallback(() => setUpdateKey(k => k + 1), []);
 
-    // 1. Listen for Yjs changes to ensure the UI updates globally
+    // 1. Listen for File Switches to reset the view
     useEffect(() => {
+        const disposable = hostApi.events.on('file:open', () => {
+             // Incrementing this triggers the next useEffect to re-bind to the new document's map
+             setFileVersion(v => v + 1);
+        });
+        return () => disposable.dispose();
+    }, [hostApi]);
+
+    // 2. Listen for Yjs changes (Re-runs when fileVersion changes)
+    useEffect(() => {
+        // Always get the map for the CURRENT document
         const yMap = hostApi.data.getMap('comment-threads');
+        
+        // Immediately update to show current doc's comments
+        forceUpdate();
+
         const observer = () => {
             forceUpdate();
             // Re-check selection after Yjs update in case a thread was deleted/resolved
             const editorState = getEditorState();
             setSelectedThreadIds(findThreadIdsInSelection(editorState));
         };
+        
         yMap.observeDeep(observer);
         return () => yMap.unobserveDeep(observer);
-    }, [hostApi, forceUpdate, getEditorState]);
+    }, [hostApi, forceUpdate, getEditorState, fileVersion]);
 
-    // 2. Listen for Editor Selection changes (via custom Tiptap extension event)
+    // 3. Listen for Editor Selection changes (via custom Tiptap extension event)
     useEffect(() => {
         const onSelectionChange = () => {
             const editorState = getEditorState();
             setSelectedThreadIds(findThreadIdsInSelection(editorState));
         };
         
-        // FIX: Match the event name emitted by index.tsx
         const disposable: Disposable = hostApi.events.on('comment.selection-changed', onSelectionChange);
         return () => disposable.dispose();
     }, [hostApi, getEditorState]);
