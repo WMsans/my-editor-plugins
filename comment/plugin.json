@@ -1,0 +1,34 @@
+{
+  "id": "comment",
+  "name": "Document Comments",
+  "version": "1.0.0",
+  "main": "index.tsx",
+  "executionEnvironment": "main",
+  "isUniversal": true,
+  "contributes": {
+    "commands": [
+      {
+        "command": "comment.addComment",
+        "title": "Add Comment to Selection",
+        "category": "Comments"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "comments",
+          "title": "Comments",
+          "icon": "💬"
+        }
+      ]
+    },
+    "views": {
+      "comments": [
+        {
+          "id": "comment.commentView",
+          "name": "Comment Threads"
+        }
+      ]
+    }
+  }
+}
