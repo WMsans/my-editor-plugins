@@ -49,7 +49,7 @@ const SidebarUpdateExtension = Extension.create({
     name: 'sidebarUpdateExtension',
     onSelectionUpdate() {
         // When selection changes, emit an event so the sidebar can re-check the cursor position
-        hostApi.events.emit('comment-plugin.selection-changed', this.editor.state);
+        hostApi.events.emit('comment.selection-changed', this.editor.state);
     },
 });
 
@@ -63,10 +63,9 @@ const addCommentCommand = (api: HostAPI) => async (commentText: string | undefin
         const { from, to } = editor.state.selection;
 
         // Use the HostAPI's built-in message box to get the initial comment
-        const initialComment = commentText || await api.window.showInformationMessage(
-            "Enter your initial comment:",
-            "Add Comment"
-        );
+        const initialComment = commentText || await api.window.showInputBox({
+            prompt: "Enter your initial comment:"
+        });
         
         if (initialComment) {
             // 1. Create a new collaborative comment thread
@@ -76,7 +75,7 @@ const addCommentCommand = (api: HostAPI) => async (commentText: string | undefin
             editor.chain().focus().setMark('commentThread', { threadId }).run();
             
             // 3. Notify the UI to focus the comments view
-            api.events.emit('comment-plugin.focus-view');
+            api.events.emit('comment.focus-view');
         }
     } else {
         api.window.showInformationMessage("Please select some text to add a comment.");
@@ -96,21 +95,21 @@ export const activate: PluginExports['activate'] = async (api) => {
     api.editor.registerExtension(SidebarUpdateExtension);
 
     // 3. Register the command
-    api.commands.registerCommand('comment-plugin.addComment', addCommentCommand(api));
+    api.commands.registerCommand('comment.addComment', addCommentCommand(api));
     
     // 4. Register the Bubble Menu Item
     const bubbleItem: BubbleItemOptions = {
         id: 'addComment',
         icon: '💬', // Use the comment emoji for the button
-        command: 'comment-plugin.addComment',
+        command: 'comment.addComment',
         tooltip: 'Add Comment (Alt+C)',
-        pluginId: 'comment-plugin',
+        pluginId: 'comment',
     };
     api.editor.registerBubbleItem(bubbleItem);
     
     // 5. Register the Sidebar Tab
     api.ui.registerSidebarTab({
-        id: 'comment-plugin.commentView',
+        id: 'comment.commentView',
         icon: '💬',
         label: 'Comments',
         component: () => <CommentSidebar 
